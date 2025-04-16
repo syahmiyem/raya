@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import '../services/firestore_service.dart';
 import '../screens/thank_you_page.dart';
 
 class RSVPForm extends StatefulWidget {
@@ -17,8 +16,18 @@ class _RSVPFormState extends State<RSVPForm> {
   final TextEditingController _contactController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   int _attendees = 1;
+  String _arrivalTime = '5:00 PM'; // Default arrival time
   bool _isSubmitting = false;
   final FirestoreService _firestoreService = FirestoreService();
+
+  // List of arrival time options
+  final List<String> _arrivalTimeOptions = [
+    '5:00 PM',
+    '6:00 PM',
+    '7:00 PM',
+    '8:00 PM',
+    '9:00 PM',
+  ];
 
   @override
   void dispose() {
@@ -94,6 +103,8 @@ class _RSVPFormState extends State<RSVPForm> {
                 ),
                 const SizedBox(height: 20),
                 _buildAttendeesSelector(),
+                const SizedBox(height: 20),
+                _buildArrivalTimeDropdown(),
                 const SizedBox(height: 20),
                 _buildTextField(
                   controller: _messageController,
@@ -194,6 +205,55 @@ class _RSVPFormState extends State<RSVPForm> {
     );
   }
 
+  Widget _buildArrivalTimeDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.access_time, color: Color(0xFF14654E)),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Text(
+              'Jangkaan waktu ketibaan',
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
+          DropdownButton<String>(
+            value: _arrivalTime,
+            icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF14654E)),
+            elevation: 16,
+            style: const TextStyle(
+              color: Color(0xFF14654E),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            underline: Container(
+              height: 0, // Remove the default underline
+            ),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _arrivalTime = newValue;
+                });
+              }
+            },
+            items: _arrivalTimeOptions
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSubmitButton() {
     return ElevatedButton(
       onPressed: _isSubmitting ? null : _submitForm,
@@ -222,12 +282,12 @@ class _RSVPFormState extends State<RSVPForm> {
                 Text('Menghantar...', style: TextStyle(fontSize: 18)),
               ],
             )
-          : const Row(
+          : Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.check_circle),
-                SizedBox(width: 8),
-                Text(
+                Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                const Text(
                   'Hantar RSVP',
                   style: TextStyle(
                     fontSize: 18,
@@ -251,6 +311,7 @@ class _RSVPFormState extends State<RSVPForm> {
           name: _nameController.text,
           contact: _contactController.text,
           attendees: _attendees,
+          arrivalTime: _arrivalTime, // Add arrival time
           message: _messageController.text,
         );
 
@@ -272,6 +333,7 @@ class _RSVPFormState extends State<RSVPForm> {
         _messageController.clear();
         setState(() {
           _attendees = 1;
+          _arrivalTime = '5:00 PM'; // Reset arrival time
           _isSubmitting = false;
         });
       } catch (e) {
@@ -290,5 +352,17 @@ class _RSVPFormState extends State<RSVPForm> {
         }
       }
     }
+  }
+}
+
+class FirestoreService {
+  Future<void> submitRSVP({
+    required String name,
+    required String contact,
+    required int attendees,
+    required String arrivalTime,
+    String? message,
+  }) async {
+    // Implementation for submitting RSVP to Firestore
   }
 }
