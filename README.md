@@ -1,16 +1,39 @@
-# raya
+# Galok Raya - Belatuk Raya Invitation App
 
-A new Flutter project.
+A beautiful Flutter app for sending Raya invitations and collecting RSVPs.
+
+## Features
+
+- Elegant welcome screen with animation
+- Detailed event information page
+- RSVP form with Firebase integration
+- Thank you page with calendar integration and location directions
+- Admin dashboard for managing RSVPs
+- Real-time attendee tracking
+
+## Screenshots
+
+[Add screenshots here]
+
+## Technologies Used
+
+- Flutter
+- Firebase (Firestore, Analytics)
+- Google Maps integration
+- Calendar integration
+- WhatsApp integration
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+1. Clone this repository
+2. Run `flutter pub get` to install dependencies
+3. Ensure you have Firebase configured with the provided credentials
+4. Run the app using `flutter run`
 
-A few resources to get you started if this is your first Flutter project:
+## Admin Access
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+To access the admin dashboard, tap the welcome screen 5 times.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Contact
+
+For questions or support, contact us via [WhatsApp](https://belatuk.wasap.my/).
