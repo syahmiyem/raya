@@ -1,9 +1,11 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import '../screens/thank_you_page.dart';
 
 class RSVPForm extends StatefulWidget {
-  const RSVPForm({Key? key}) : super(key: key);
+  const RSVPForm({super.key});
 
   @override
   State<RSVPForm> createState() => _RSVPFormState();

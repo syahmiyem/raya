@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 
 class AdminStatsCard extends StatelessWidget {
@@ -7,12 +9,12 @@ class AdminStatsCard extends StatelessWidget {
   final Color color;
 
   const AdminStatsCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

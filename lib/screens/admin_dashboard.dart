@@ -5,7 +5,7 @@ import '../widgets/admin_rsvp_list.dart';
 import '../widgets/admin_stats_card.dart';
 
 class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({Key? key}) : super(key: key);
+  const AdminDashboard({super.key});
 
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
@@ -36,7 +36,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading admin data: $e');
       setState(() {
         _isLoading = false;
       });

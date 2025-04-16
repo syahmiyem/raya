@@ -7,9 +7,9 @@ class AdminRSVPList extends StatelessWidget {
   final List<QueryDocumentSnapshot> rsvpDocs;
 
   const AdminRSVPList({
-    Key? key,
+    super.key,
     required this.rsvpDocs,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

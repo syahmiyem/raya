@@ -1,8 +1,10 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import '../widgets/rsvp_form.dart';
 
 class InvitationPage extends StatelessWidget {
-  const InvitationPage({Key? key}) : super(key: key);
+  const InvitationPage({super.key});
 
   @override
   Widget build(BuildContext context) {

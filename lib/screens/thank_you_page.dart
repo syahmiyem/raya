@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -6,10 +8,10 @@ class ThankYouPage extends StatelessWidget {
   final int attendees;
 
   const ThankYouPage({
-    Key? key,
+    super.key,
     required this.name,
     required this.attendees,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

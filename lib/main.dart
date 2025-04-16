@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/welcome_page.dart';
@@ -15,7 +17,7 @@ void main() async {
 }
 
 class RayaApp extends StatelessWidget {
-  const RayaApp({Key? key}) : super(key: key);
+  const RayaApp({super.key});
 
   @override
   Widget build(BuildContext context) {

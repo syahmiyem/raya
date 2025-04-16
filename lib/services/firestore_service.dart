@@ -20,8 +20,7 @@ class FirestoreService {
         'submittedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      print('Error submitting RSVP: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -43,7 +42,6 @@ class FirestoreService {
       }
       return total;
     } catch (e) {
-      print('Error getting total attendees: $e');
       return 0;
     }
   }
