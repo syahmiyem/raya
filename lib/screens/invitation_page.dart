@@ -2,26 +2,190 @@
 
 import 'package:flutter/material.dart';
 import '../widgets/rsvp_form.dart';
+import 'dart:math' as math;
 
-class InvitationPage extends StatelessWidget {
+class InvitationPage extends StatefulWidget {
   const InvitationPage({super.key});
+
+  @override
+  State<InvitationPage> createState() => _InvitationPageState();
+}
+
+class _InvitationPageState extends State<InvitationPage>
+    with TickerProviderStateMixin {
+  // Controllers for floating ketupat animations
+  late List<AnimationController> _animationControllers;
+  late List<Animation<double>> _positionAnimations;
+
+  // Generate evenly distributed positions for ketupat
+  final List<FloatingKetupat> _ketupatList = _generateDistributedKetupatList(8);
+
+  // Generate evenly distributed ketupat positions
+  static List<FloatingKetupat> _generateDistributedKetupatList(int count) {
+    List<FloatingKetupat> result = [];
+
+    // Define screen grid sections
+    int rows = 3;
+    int cols = 3;
+
+    // Keep track of which grid cells are occupied
+    Set<String> occupiedCells = {};
+
+    for (int i = 0; i < count; i++) {
+      int attempts = 0;
+      late int row;
+      late int col;
+      String cellKey;
+
+      // Try to find an unoccupied cell
+      do {
+        if (attempts > 20) {
+          // If too many attempts, reset some cells to allow placing more ketupat
+          if (occupiedCells.length > count / 2) {
+            occupiedCells.clear();
+          }
+        }
+
+        row = math.Random().nextInt(rows);
+        col = math.Random().nextInt(cols);
+        cellKey = "$row-$col";
+        attempts++;
+      } while (occupiedCells.contains(cellKey) && attempts < 30);
+
+      occupiedCells.add(cellKey);
+
+      // Calculate position within the cell (with some randomness)
+      double cellWidth = 1.0 / cols;
+      double cellHeight = 1.0 / rows;
+
+      // Position within cell (add some randomness but keep within cell bounds)
+      double xOffset =
+          math.Random().nextDouble() * 0.6 + 0.2; // 0.2-0.8 range within cell
+      double yOffset =
+          math.Random().nextDouble() * 0.6 + 0.2; // 0.2-0.8 range within cell
+
+      double x = (col * cellWidth) + (cellWidth * xOffset);
+      double y = (row * cellHeight) + (cellHeight * yOffset);
+
+      // Clamp values to ensure they're within screen bounds (0.05-0.95)
+      x = math.max(0.05, math.min(0.95, x));
+      y = math.max(0.05, math.min(0.95, y));
+
+      result.add(FloatingKetupat(
+        x: x,
+        y: y,
+        size: math.Random().nextDouble() * 40 + 50, // Random size between 50-90
+        speed: math.Random().nextDouble() * 5 + 5, // Random speed
+      ));
+    }
+
+    return result;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize animation controllers
+    _animationControllers = List.generate(
+      _ketupatList.length,
+      (index) => AnimationController(
+        vsync: this,
+        duration: Duration(seconds: _ketupatList[index].speed.round() + 10),
+      )..repeat(reverse: true),
+    );
+
+    // Initialize position animations
+    _positionAnimations = List.generate(
+      _ketupatList.length,
+      (index) => Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(
+        CurvedAnimation(
+          parent: _animationControllers[index],
+          curve: Curves.easeInOut,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _animationControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildFestiveHeader(),
-              _buildInvitationContent(context),
-              const RSVPForm(),
-              const SizedBox(height: 40),
-            ],
+      body: Stack(
+        children: [
+          // Background gradient
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white,
+                  const Color(0xFFF5F5F5),
+                ],
+              ),
+            ),
           ),
-        ),
+
+          // Floating ketupat images
+          ..._buildFloatingKetupat(),
+
+          // Main content
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildFestiveHeader(),
+                  _buildInvitationContent(context),
+                  const RSVPForm(),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  // Build the floating ketupat images
+  List<Widget> _buildFloatingKetupat() {
+    return List.generate(_ketupatList.length, (index) {
+      return AnimatedBuilder(
+        animation: _animationControllers[index],
+        builder: (context, child) {
+          return Positioned(
+            left: _ketupatList[index].x * MediaQuery.of(context).size.width +
+                30 * math.sin(_positionAnimations[index].value * 2 * math.pi),
+            top: _ketupatList[index].y * MediaQuery.of(context).size.height +
+                30 * math.cos(_positionAnimations[index].value * 2 * math.pi),
+            child: Opacity(
+              opacity: 0.3, // More subtle than in welcome page
+              child: Transform.rotate(
+                angle: _positionAnimations[index].value * 2 * math.pi / 10,
+                child: Image.asset(
+                  'assets/images/ketupat.png',
+                  width: _ketupatList[index].size,
+                  height: _ketupatList[index].size,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    });
   }
 
   Widget _buildFestiveHeader() {
@@ -169,4 +333,19 @@ class InvitationPage extends StatelessWidget {
       size: 24,
     );
   }
+}
+
+// Class to store ketupat properties
+class FloatingKetupat {
+  final double x; // x position ratio (0-1)
+  final double y; // y position ratio (0-1)
+  final double size; // size of the ketupat
+  final double speed; // animation speed
+
+  FloatingKetupat({
+    required this.x,
+    required this.y,
+    required this.size,
+    required this.speed,
+  });
 }
