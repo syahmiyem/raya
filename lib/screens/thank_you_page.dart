@@ -4,13 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ThankYouPage extends StatelessWidget {
-  final String name;
-  final int attendees;
-
   const ThankYouPage({
     super.key,
-    required this.name,
-    required this.attendees,
   });
 
   @override
@@ -86,9 +81,9 @@ class ThankYouPage extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Kami akan menjangkakan kehadiran ${name.trim()} ${attendees > 1 ? 'bersama ${attendees - 1} tetamu' : ''}.',
-                          style: const TextStyle(
+                        const Text(
+                          'Kami akan menjangkakan kehadiran anda.',
+                          style: TextStyle(
                             fontSize: 16,
                             color: Color(0xFF333333),
                           ),
@@ -113,7 +108,7 @@ class ThankYouPage extends StatelessWidget {
                               context,
                               title: 'Tambah ke\nKalendar',
                               icon: Icons.calendar_today,
-                              onTap: _addToCalendar,
+                              onTap: () => _addToCalendar(context),
                             ),
                             _buildActionButton(
                               context,
@@ -223,11 +218,36 @@ class ThankYouPage extends StatelessWidget {
     );
   }
 
-  void _addToCalendar() async {
+  void _addToCalendar(BuildContext context) async {
     final eventStartTime = DateTime(2025, 4, 25, 17, 0); // 5:00 PM
     final eventEndTime = DateTime(2025, 4, 25, 22, 0); // 10:00 PM
 
-    // Format for calendar URL
+    // Try platform-specific calendar intent first
+    final title = 'Galok Raya Studio Belatuk';
+    final location = 'Lailas Deli, Jalan Besar, Kuantan';
+    final description = 'You are invited to Galok Raya Studio Belatuk';
+
+    // For iOS, use different format
+    if (Theme.of(context).platform == TargetPlatform.iOS) {
+      final url = Uri.parse('calshow://');
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url);
+        return;
+      }
+    }
+
+    // For Android, try intent
+    final androidIntent = Uri.parse('content://com.android.calendar/events');
+    if (await canLaunchUrl(androidIntent)) {
+      try {
+        await launchUrl(androidIntent);
+        return;
+      } catch (e) {
+        // Fall back to web if direct intent fails
+      }
+    }
+
+    // Fall back to Google Calendar web as last resort
     final startDate = eventStartTime
         .toIso8601String()
         .replaceAll('-', '')
@@ -241,10 +261,10 @@ class ThankYouPage extends StatelessWidget {
 
     final url =
         Uri.parse('https://www.google.com/calendar/render?action=TEMPLATE'
-            '&text=Galok+Raya+Studio+Belatuk'
+            '&text=$title'
             '&dates=$startDate/$endDate'
-            '&details=You+are+invited+to+Galok+Raya+Studio+Belatuk'
-            '&location=Lailas+Deli,+Jalan+Besar,+Kuantan');
+            '&details=$description'
+            '&location=$location');
 
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -252,13 +272,8 @@ class ThankYouPage extends StatelessWidget {
   }
 
   void _openMaps() async {
-    // Using a general location for Lailas Deli in Kuantan
-    const double latitude = 3.8166; // Example coordinates - replace with actual
-    const double longitude =
-        103.3317; // Example coordinates - replace with actual
-
-    final googleMapsUrl = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&destination_place_id=ChIJXxnIVQMH0TERIkuv69H-Pu8&travelmode=driving');
+    // Direct link to Lailas Deli in Kuantan
+    final googleMapsUrl = Uri.parse('https://maps.app.goo.gl/ke5ZGRiRaLjafsxT6');
 
     if (await canLaunchUrl(googleMapsUrl)) {
       await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);

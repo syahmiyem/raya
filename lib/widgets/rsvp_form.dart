@@ -328,10 +328,7 @@ class _RSVPFormState extends State<RSVPForm> {
           // Navigate to thank you page
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => ThankYouPage(
-                name: _nameController.text,
-                attendees: _attendees,
-              ),
+              builder: (context) => const ThankYouPage(),
             ),
           );
         }
