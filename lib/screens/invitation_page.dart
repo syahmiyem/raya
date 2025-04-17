@@ -217,6 +217,7 @@ class _InvitationPageState extends State<InvitationPage>
               ),
             ],
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
