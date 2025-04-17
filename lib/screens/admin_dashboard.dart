@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firestore_service.dart';
+import '../widgets/admin_rsvp_list.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -125,8 +126,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   // Update the arrival time distribution map
-  // Modified to not call setState during build
-  Map<String, int> _calculateArrivalTimeDistribution(List<QueryDocumentSnapshot> docs) {
+  Map<String, int> _calculateArrivalTimeDistribution(
+      List<QueryDocumentSnapshot> docs) {
     final distribution = {
       '5:00 PM': 0,
       '6:00 PM': 0,
@@ -142,10 +143,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       final attendees = data['attendees'] as int? ?? 1;
 
       if (distribution.containsKey(arrivalTime)) {
-        distribution[arrivalTime] = (distribution[arrivalTime] ?? 0) + attendees;
+        distribution[arrivalTime] =
+            (distribution[arrivalTime] ?? 0) + attendees;
       }
     }
-    
+
     return distribution;
   }
 
@@ -169,214 +171,99 @@ class _AdminDashboardState extends State<AdminDashboard> {
             )
           : RefreshIndicator(
               onRefresh: _loadData,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestoreService.getRSVPs(),
+                builder: (context, snapshot) {
+                  // Handle loading, error, and empty states
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  // Calculate total RSVPs
+                  if (snapshot.hasData) {
+                    final docs = snapshot.data!.docs;
+                    _totalRSVPs = docs.length;
+                  } else {
+                    _totalRSVPs = 0;
+                  }
+
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: _buildStatsCard(
-                              title: 'Total RSVPs',
-                              value: _totalRSVPs.toString(),
-                              icon: Icons.how_to_reg,
-                              color: const Color(0xFF14654E),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatsCard(
+                                  title: 'Total RSVPs',
+                                  value: _totalRSVPs.toString(),
+                                  icon: Icons.how_to_reg,
+                                  color: const Color(0xFF14654E),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildStatsCard(
+                                  title: 'Total Pax',
+                                  value: _totalAttendees.toString(),
+                                  icon: Icons.groups,
+                                  color: const Color(0xFFE4A532),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Arrival Time Distribution',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF14654E),
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildStatsCard(
-                              title: 'Total Pax',
-                              value: _totalAttendees.toString(),
-                              icon: Icons.groups,
-                              color: const Color(0xFFE4A532),
+                          const SizedBox(height: 16),
+                          if (snapshot.hasData &&
+                              snapshot.data!.docs.isNotEmpty)
+                            _buildArrivalTimeTable(
+                                _calculateArrivalTimeDistribution(
+                                    snapshot.data!.docs))
+                          else
+                            _buildArrivalTimeTable(_arrivalTimeDistribution),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'RSVP Submissions',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF14654E),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Arrival Time Distribution',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF14654E),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _firestoreService.getRSVPs(),
-                        builder: (context, snapshot) {
-                          // Early return for loading/error states
-                          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                            return _buildArrivalTimeTable(_arrivalTimeDistribution);
-                          }
-                          
-                          // Calculate distribution without setState
-                          final distribution = _calculateArrivalTimeDistribution(snapshot.data!.docs);
-                          
-                          // Return the table with the calculated distribution
-                          return _buildArrivalTimeTable(distribution);
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'RSVP Submissions',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF14654E),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _firestoreService.getRSVPs(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                                  ConnectionState.waiting &&
-                              !snapshot.hasData) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-
-                          if (snapshot.hasError) {
-                            return Center(
-                              child: Text('Error: ${snapshot.error}'),
-                            );
-                          }
-
-                          if (!snapshot.hasData ||
-                              snapshot.data!.docs.isEmpty) {
-                            return const Center(
+                          const SizedBox(height: 8),
+                          if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+                            const Center(
                               child: Padding(
                                 padding: EdgeInsets.all(24.0),
                                 child: Text('No RSVPs yet'),
                               ),
-                            );
-                          }
-
-                          // Update the RSVP count without setState
-                          final docs = snapshot.data!.docs;
-                          _totalRSVPs = docs.length;
-
-                          // Render the RSVP list with delete functionality
-                          return ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: docs.length,
-                            itemBuilder: (context, index) {
-                              final doc = docs[index];
-                              final data = doc.data() as Map<String, dynamic>;
-                              final name = data['name'] as String? ?? 'No Name';
-                              final contact =
-                                  data['contact'] as String? ?? 'No Contact';
-                              final attendees = data['attendees'] as int? ?? 1;
-                              final arrivalTime =
-                                  data['arrivalTime'] as String? ?? '5:00 PM';
-                              final message = data['message'] as String? ?? '';
-                              final timestamp = data['timestamp'] as Timestamp?;
-
-                              // Format the timestamp
-                              String formattedDate = 'Pending';
-                              if (timestamp != null) {
-                                final date = timestamp.toDate();
-                                formattedDate =
-                                    '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-                              }
-
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 16),
-                                elevation: 2,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              name,
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFF14654E),
-                                              ),
-                                            ),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () =>
-                                                _deleteRSVP(doc.id),
-                                          ),
-                                        ],
-                                      ),
-                                      const Divider(),
-                                      _buildInfoRow(
-                                          Icons.phone, 'Contact', contact),
-                                      _buildInfoRow(Icons.groups, 'Attendees',
-                                          attendees.toString()),
-                                      _buildInfoRow(Icons.access_time,
-                                          'Arrival Time', arrivalTime),
-                                      if (message.isNotEmpty)
-                                        _buildInfoRow(
-                                            Icons.message, 'Message', message),
-                                      _buildInfoRow(Icons.calendar_today,
-                                          'Submitted', formattedDate),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
+                            )
+                          else
+                            AdminRSVPList(
+                              rsvpDocs: snapshot.data!.docs,
+                              onDelete: _deleteRSVP,
+                            ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: const Color(0xFFE4A532),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: Colors.black87,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -489,7 +376,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ],
             ),
           ),
-          ...['5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM'].map((time) {
+          ...['5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM']
+              .map((time) {
             return Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
