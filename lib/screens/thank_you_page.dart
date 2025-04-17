@@ -87,7 +87,7 @@ class ThankYouPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Kami akan menjangkakan kehadiran $name ${attendees > 1 ? 'dan $attendees tetamu' : ''}.',
+                          'Kami akan menjangkakan kehadiran ${name.trim()} ${attendees > 1 ? 'bersama ${attendees - 1} tetamu' : ''}.',
                           style: const TextStyle(
                             fontSize: 16,
                             color: Color(0xFF333333),
