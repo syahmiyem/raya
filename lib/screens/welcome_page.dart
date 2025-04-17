@@ -174,7 +174,7 @@ class _WelcomePageState extends State<WelcomePage>
                         height: 200, // Adjust size as needed
                         fit: BoxFit.contain,
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20), // Reduced from 40 to 20
 
                       // Main invitation text
                       Container(
@@ -199,7 +199,7 @@ class _WelcomePageState extends State<WelcomePage>
                         child: Column(
                           children: [
                             const Text(
-                              'Ingin menjemput anda sekeluarga',
+                              'Ingin menjemput anda sekeluarga untuk sama meraikan',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w600,
@@ -207,21 +207,11 @@ class _WelcomePageState extends State<WelcomePage>
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 15),
-                            const Text(
-                              'untuk sama meraikan',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontStyle: FontStyle.italic,
-                                color: Color(0xFF333333),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
                             const SizedBox(height: 20),
                             const Text(
                               'STUDIO BELATUK GALOK RAYA',
                               style: TextStyle(
-                                fontSize: 36,
+                                fontSize: 30, // Reduced from 36 to 30
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.5,
                                 color: Color(0xFFE4A532),
