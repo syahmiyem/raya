@@ -106,7 +106,7 @@ class _RSVPFormState extends State<RSVPForm> {
                 const SizedBox(height: 20),
                 _buildTextField(
                   controller: _messageController,
-                  label: 'Ada Pesanan?',
+                  label: 'Ada Pesanan? Isikan dibawah (jika ada)',
                   icon: Icons.message,
                   maxLines: 3,
                 ),
