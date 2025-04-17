@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firestore_service.dart';
@@ -51,7 +53,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading data: $e');
       setState(() {
         _isLoading = false;
       });
@@ -86,7 +87,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       // Refresh data after deletion
       await _loadData();
     } catch (e) {
-      print('Error deleting RSVP: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -415,7 +415,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
