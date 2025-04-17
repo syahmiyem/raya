@@ -1,6 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import '../services/firestore_service.dart';
 import '../screens/thank_you_page.dart';
 
 class RSVPForm extends StatefulWidget {
@@ -93,10 +95,6 @@ class _RSVPFormState extends State<RSVPForm> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Masukkan nombor telefon anda';
-                    }
-                    // Basic email validation
-                    if (value.contains('@') && !value.contains('.')) {
-                      return 'Please enter a valid email address';
                     }
                     return null;
                   },
@@ -285,7 +283,7 @@ class _RSVPFormState extends State<RSVPForm> {
           : Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
+                const Icon(Icons.check_circle, color: Colors.white),
                 const SizedBox(width: 8),
                 const Text(
                   'Hantar RSVP',
@@ -300,20 +298,31 @@ class _RSVPFormState extends State<RSVPForm> {
   }
 
   void _submitForm() async {
+    if (kDebugMode) {
+      print('Submit button pressed');
+    }
+
     if (_formKey.currentState!.validate()) {
+      if (kDebugMode) {
+        print('Form validation passed');
+      }
+
       setState(() {
         _isSubmitting = true;
       });
 
       try {
-        // Submit to Firestore
         await _firestoreService.submitRSVP(
           name: _nameController.text,
           contact: _contactController.text,
           attendees: _attendees,
-          arrivalTime: _arrivalTime, // Add arrival time
+          arrivalTime: _arrivalTime,
           message: _messageController.text,
         );
+
+        if (kDebugMode) {
+          print('RSVP submitted successfully');
+        }
 
         if (mounted) {
           // Navigate to thank you page
@@ -333,10 +342,14 @@ class _RSVPFormState extends State<RSVPForm> {
         _messageController.clear();
         setState(() {
           _attendees = 1;
-          _arrivalTime = '5:00 PM'; // Reset arrival time
+          _arrivalTime = '5:00 PM';
           _isSubmitting = false;
         });
       } catch (e) {
+        if (kDebugMode) {
+          print('Error submitting RSVP: $e');
+        }
+
         setState(() {
           _isSubmitting = false;
         });
@@ -351,18 +364,10 @@ class _RSVPFormState extends State<RSVPForm> {
           );
         }
       }
+    } else {
+      if (kDebugMode) {
+        print('Form validation failed');
+      }
     }
-  }
-}
-
-class FirestoreService {
-  Future<void> submitRSVP({
-    required String name,
-    required String contact,
-    required int attendees,
-    required String arrivalTime,
-    String? message,
-  }) async {
-    // Implementation for submitting RSVP to Firestore
   }
 }
