@@ -1,9 +1,14 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, avoid_web_libraries_in_flutter, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firestore_service.dart';
 import '../widgets/admin_rsvp_list.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:intl/intl.dart';
+
+// For web export
+import 'dart:html' as html;
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -125,6 +130,87 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
+  // Function to handle deletion of all RSVPs
+  Future<void> _deleteAllRSVPs() async {
+    try {
+      // Show a confirmation dialog
+      final shouldDelete = await _showDeleteAllConfirmationDialog();
+      if (shouldDelete != true) return;
+
+      // Show loading indicator
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Get all RSVPs
+      final snapshot =
+          await FirebaseFirestore.instance.collection('rsvps').get();
+
+      // Create a batch to delete all documents efficiently
+      final batch = FirebaseFirestore.instance.batch();
+
+      // Add each document to the batch deletion
+      for (var doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // Commit the batch deletion
+      await batch.commit();
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('All RSVPs deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // Refresh data after deletion
+      await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting RSVPs: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Show confirmation dialog before deleting all RSVPs
+  Future<bool?> _showDeleteAllConfirmationDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete All Confirmation'),
+        content: const Text(
+          'Are you sure you want to delete ALL RSVPs? This action cannot be undone.',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete All'),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Update the arrival time distribution map
   Map<String, int> _calculateArrivalTimeDistribution(
       List<QueryDocumentSnapshot> docs) {
@@ -151,6 +237,76 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return distribution;
   }
 
+  Future<void> _exportRSVPsToTxt() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Get all RSVPs from Firestore
+      final snapshot =
+          await FirebaseFirestore.instance.collection('rsvps').get();
+
+      // Format the data
+      final buffer = StringBuffer();
+      buffer.write('Studio Belatuk Galok Raya - RSVP List\n');
+      buffer.write(
+          'Generated on: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}\n\n');
+      buffer.write('Total RSVPs: ${snapshot.docs.length}\n');
+      buffer.write('Total Attendees: $_totalAttendees\n\n');
+      buffer.write('----------------------------------------\n\n');
+
+      // Add each RSVP to the text
+      for (int i = 0; i < snapshot.docs.length; i++) {
+        final doc = snapshot.docs[i];
+        final data = doc.data();
+
+        buffer.write('RSVP #${i + 1}\n');
+        buffer.write('Name: ${data['name'] ?? 'N/A'}\n');
+        buffer.write('Contact: ${data['contact'] ?? 'N/A'}\n');
+        buffer.write('Number of Attendees: ${data['attendees'] ?? 1}\n');
+        buffer.write('Expected Arrival: ${data['arrivalTime'] ?? 'N/A'}\n');
+        if (data['message'] != null && data['message'].toString().isNotEmpty) {
+          buffer.write('Message: ${data['message']}\n');
+        }
+        buffer.write(
+            'Submitted on: ${data['timestamp'] != null ? DateFormat('yyyy-MM-dd HH:mm').format((data['timestamp'] as Timestamp).toDate()) : 'N/A'}\n');
+        buffer.write('----------------------------------------\n\n');
+      }
+
+      final txt = buffer.toString();
+
+      // Download the file (for web)
+      if (kIsWeb) {
+        // For web: Create blob and trigger download
+        final bytes = html.Blob([txt]);
+        final url = html.Url.createObjectUrlFromBlob(bytes);
+        html.Url.revokeObjectUrl(url);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('RSVP list downloaded successfully')),
+        );
+      } else {
+        // For mobile, we'd need additional packages
+        // This would require adding path_provider and share_plus packages
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Export is only available on web platform')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error exporting RSVP data: ${e.toString()}')),
+        );
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -159,8 +315,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
         backgroundColor: const Color(0xFF14654E),
         foregroundColor: Colors.white,
         actions: [
+          // Delete all button
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            tooltip: 'Delete All RSVPs',
+            onPressed: _deleteAllRSVPs,
+          ),
+          // Export button
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: 'Export RSVPs',
+            onPressed: _exportRSVPsToTxt,
+          ),
+          // Refresh button
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Data',
             onPressed: _loadData,
           ),
         ],
